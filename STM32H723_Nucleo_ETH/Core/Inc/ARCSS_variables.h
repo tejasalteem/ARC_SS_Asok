@@ -417,7 +417,7 @@ float CurError[2] = {0,0};
 float PrevError[2] =  {0,0};
 
 float CurError_Avg[2] = {0,0};
-float PrevError_Avg[2] = {0,0};
+float PrevError_Avg[2] = {5000.0,5000.0};
 
 float CurErrorPositive_Avg[2] = {0,0};
 
@@ -946,3 +946,5 @@ _Bool Flag_EncError_SkipInc = 0;
 uint16_t Temp_Disp_Enc_Count_at_Z = 0;
 uint16_t Temp_Disp_Prev_Enc_Count_at_Z = 0;
 float Prev_Corrected_Error = 5000.0;
+
+uint16_t Test_StopCorr_Index = 0;

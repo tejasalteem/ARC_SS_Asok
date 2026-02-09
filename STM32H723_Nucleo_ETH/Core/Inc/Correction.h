@@ -10,12 +10,15 @@ void Common_Correction_Logic_Vertical(void)
 	arc_execution_func_cur_id = 95;
 
 //	if((Flag_GateSet == 0) || (Flag_Auto_Vertical == 0) || (Flag_New_Error_Arrived_Vertical == 0) || (Flag_BaseLine_Error != 0) || (Flag_Print_Mode == 0))
-	if(
-			(Flag_Auto_Vertical == 0)
-			|| (Flag_New_Error_Arrived_Vertical == 0)
-			|| (Stop_Controlling_if_Error_IsDecreasing(CurError_Avg[Vertical]) == 1)
-	)
+	if((Flag_Auto_Vertical == 0) || (Flag_New_Error_Arrived_Vertical == 0))
 	{
+		return;
+	}
+
+	if(Stop_Controlling_if_Error_IsDecreasing(CurError_Avg[Vertical],PrevError_Avg[Vertical]) == 1)
+	{
+		PrevError_Avg[Vertical] = CurError_Avg[Vertical];
+		Flag_New_Error_Arrived_Vertical = 0;
 		return;
 	}
 

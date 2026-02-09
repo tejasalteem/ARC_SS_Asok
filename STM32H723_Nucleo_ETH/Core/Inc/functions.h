@@ -21,6 +21,8 @@ extern uint16_t filled_count;
 
 //==================================================================================
 
+_Bool Stop_Controlling_if_Error_IsDecreasing(float, float);
+
 uint16_t Get_Received_Data_Length(UART_HandleTypeDef *huart);
 
 void Check_Config_Float_Limits(void);
@@ -2881,36 +2883,43 @@ void Gate_Calculations_Slave(void)
 	Flag_Update_Graph_Gates = 1;
 }
 
-_Bool Stop_Controlling_if_Error_IsDecreasing(float cur_Error)
+_Bool Stop_Controlling_if_Error_IsDecreasing(float Cur_Error, float Prev_Error)
 {
-	float temp_diff = (cur_Error < Prev_Corrected_Error)
-			? Prev_Corrected_Error - cur_Error : cur_Error-Prev_Corrected_Error;
+	float temp_diff = (Cur_Error < Prev_Error) ? Prev_Error - Cur_Error : Cur_Error - Prev_Error;
 
-	char Cur_Error_State = (cur_Error < 0)? 0:1;
-	char Prev_Error_State = (Prev_Corrected_Error < 0)? 0:1;
+	char Cur_Error_State = (Cur_Error < 0)? 0:1;
+	char Prev_Error_State = (Prev_Error < 0)? 0:1;
 
-	float Pos_Cur_Error = (cur_Error < 0) ? cur_Error * -1 : cur_Error;
-	float Pos_Prev_Error = (Prev_Corrected_Error < 0) ? Prev_Corrected_Error * -1 : Prev_Corrected_Error;
+	float Pos_Cur_Error 	= (Cur_Error < 0) 	? Cur_Error * -1 	: Cur_Error;
+	float Pos_Prev_Error 	= (Prev_Error < 0) 	? Prev_Error * -1 	: Prev_Error;
 
-	if(Prev_Corrected_Error == 5000.0)
+	Test_StopCorr_Index++;
+
+	if(Prev_Error == 5000.0)
 	{
-		Prev_Corrected_Error = cur_Error;
+		sprintf(Debug_String,"VERT: %u. OK_StopCorr_5k : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
+		Send_String_UART_232((uint8_t *)Debug_String);
 		return(0);
 	}
+
 	if(Prev_Error_State != Cur_Error_State)
 	{
-		Prev_Corrected_Error = cur_Error;
+		sprintf(Debug_String,"VERT: %u. OK_StopCorr_!= : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
+		Send_String_UART_232((uint8_t *)Debug_String);
 		return(0);
 	}
 	else
 	{
 		if((Pos_Cur_Error < Pos_Prev_Error) && (temp_diff > 0.05))
 		{
+			sprintf(Debug_String,"VERT: %u. RET_StopCorr : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error, Prev_Error);
+			Send_String_UART_232((uint8_t *)Debug_String);
 			return(1);
 		}
 		else
 		{
-			Prev_Corrected_Error = cur_Error;
+			sprintf(Debug_String,"VERT: %u. OK_StopCorr_== : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
+			Send_String_UART_232((uint8_t *)Debug_String);
 			return(0);
 		}
 	}
