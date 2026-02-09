@@ -1,0 +1,9 @@
+../Core/Src/tcpClientRAW.c:159:6:Send_New_Data	24	static
+../Core/Src/tcpClientRAW.c:188:5:tcp_client_init	24	static
+../Core/Src/tcpClientRAW.c:219:6:close_all_tcp_connections	16	static
+../Core/Src/tcpClientRAW.c:591:5:tcp_client_connection_close	16	static
+../Core/Src/tcpClientRAW.c:261:14:tcp_client_connected	32	static
+../Core/Src/tcpClientRAW.c:458:14:tcp_client_sent	8	static
+../Core/Src/tcpClientRAW.c:414:14:tcp_client_poll	16	static
+../Core/Src/tcpClientRAW.c:311:14:tcp_client_recv	32	static
+../Core/Src/tcpClientRAW.c:241:5:tcp_Close_Connection	16	static

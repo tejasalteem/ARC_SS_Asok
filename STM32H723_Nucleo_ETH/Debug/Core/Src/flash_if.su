@@ -1,0 +1,7 @@
+../Core/Src/flash_if.c:39:6:Jump_To_Application	8	static,ignoring_inline_asm
+../Core/Src/flash_if.c:60:6:FLASH_If_Init	0	static
+../Core/Src/flash_if.c:74:10:FLASH_If_Erase	48	static,ignoring_inline_asm
+../Core/Src/flash_if.c:119:10:FLASH_If_Write	24	static,ignoring_inline_asm
+../Core/Src/flash_if.c:153:19:FLASH_If_Copy	56	static,ignoring_inline_asm
+../Core/Src/flash_if.c:187:10:FLASH_If_GetWriteProtectionStatus	88	static
+../Core/Src/flash_if.c:267:19:FLASH_If_WriteProtectionConfig	168	static

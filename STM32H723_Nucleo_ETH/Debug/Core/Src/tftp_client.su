@@ -1,0 +1,8 @@
+../Core/Src/tftp_client.c:66:5:parse_tsize_from_oack	32	static
+../Core/Src/tftp_client.c:102:5:tftp_write	536	static
+../Core/Src/tftp_client.c:144:6:tftp_client_close	8	static
+../Core/Src/tftp_client.c:157:6:tftp_init_client	8	static
+../Core/Src/tftp_client.c:246:6:send_req	328	static
+../Core/Src/tftp_client.c:90:6:send_rrq_periodic	8	static
+../Core/Src/tftp_client.c:380:6:send_ack	32	static
+../Core/Src/tftp_client.c:297:6:tftp_recv_callback	32	static
