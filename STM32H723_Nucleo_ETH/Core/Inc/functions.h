@@ -2895,26 +2895,26 @@ _Bool Stop_Controlling_if_Error_IsDecreasing(float cur_Error)
 	if(Prev_Corrected_Error == 5000.0)
 	{
 		Prev_Corrected_Error = cur_Error;
-		return false;
+		return(0);
 	}
 	if(Prev_Error_State != Cur_Error_State)
 	{
 		Prev_Corrected_Error = cur_Error;
-		return false;
+		return(0);
 	}
 	else
 	{
-		if((Pos_Cur_Error < Pos_Prev_Error) && (temm_diff > 0.05))
+		if((Pos_Cur_Error < Pos_Prev_Error) && (temp_diff > 0.05))
 		{
-			return true;
+			return(1);
 		}
 		else
 		{
 			Prev_Corrected_Error = cur_Error;
-			return false;
+			return(0);
 		}
 	}
-	return false;
+	return(0);
 }
 
 //Check at the time of GateSet, avg and Avg_Value need to be reset

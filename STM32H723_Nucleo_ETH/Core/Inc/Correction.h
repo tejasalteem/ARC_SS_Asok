@@ -13,7 +13,7 @@ void Common_Correction_Logic_Vertical(void)
 	if(
 			(Flag_Auto_Vertical == 0)
 			|| (Flag_New_Error_Arrived_Vertical == 0)
-			|| (Stop_Controlling_if_Error_IsDecreasing(CurError_Avg[Vertical]) == true)
+			|| (Stop_Controlling_if_Error_IsDecreasing(CurError_Avg[Vertical]) == 1)
 	)
 	{
 		return;

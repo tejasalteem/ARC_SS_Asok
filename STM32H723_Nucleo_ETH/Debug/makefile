@@ -81,8 +81,8 @@ all: main-build
 main-build: STM32H723_Nucleo_ETH.elf secondary-outputs
 
 # Tool invocations
-STM32H723_Nucleo_ETH.elf STM32H723_Nucleo_ETH.map: $(OBJS) $(USER_OBJS) H:\WORKSPACE_STM32_V19\STM32H723_Nucleo_ETH\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32H723_Nucleo_ETH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"H:\WORKSPACE_STM32_V19\STM32H723_Nucleo_ETH\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32H723_Nucleo_ETH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+STM32H723_Nucleo_ETH.elf STM32H723_Nucleo_ETH.map: $(OBJS) $(USER_OBJS) H:\GIT_REPOS\STM32H723_Nucleo_ETH\STM32H723ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM32H723_Nucleo_ETH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"H:\GIT_REPOS\STM32H723_Nucleo_ETH\STM32H723ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32H723_Nucleo_ETH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
