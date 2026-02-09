@@ -2883,14 +2883,36 @@ void Gate_Calculations_Slave(void)
 
 _Bool Stop_Controlling_if_Error_IsDecreasing(float cur_Error)
 {
+	float temp_diff = (cur_Error < Prev_Corrected_Error)
+			? Prev_Corrected_Error - cur_Error : cur_Error-Prev_Corrected_Error;
+
+	char Cur_Error_State = (cur_Error < 0)? 0:1;
+	char Prev_Error_State = (Prev_Corrected_Error < 0)? 0:1;
+
+	float Pos_Cur_Error = (cur_Error < 0) ? cur_Error * -1 : cur_Error;
+	float Pos_Prev_Error = (Prev_Corrected_Error < 0) ? Prev_Corrected_Error * -1 : Prev_Corrected_Error;
+
 	if(Prev_Corrected_Error == 5000.0)
+	{
+		Prev_Corrected_Error = cur_Error;
+		return false;
+	}
+	if(Prev_Error_State != Cur_Error_State)
 	{
 		Prev_Corrected_Error = cur_Error;
 		return false;
 	}
 	else
 	{
-
+		if((Pos_Cur_Error < Pos_Prev_Error) && (temm_diff > 0.05))
+		{
+			return true;
+		}
+		else
+		{
+			Prev_Corrected_Error = cur_Error;
+			return false;
+		}
 	}
 	return false;
 }
