@@ -945,3 +945,4 @@ _Bool Flag_EncError_SkipInc = 0;
 
 uint16_t Temp_Disp_Enc_Count_at_Z = 0;
 uint16_t Temp_Disp_Prev_Enc_Count_at_Z = 0;
+float Prev_Corrected_Error = 5000.0;

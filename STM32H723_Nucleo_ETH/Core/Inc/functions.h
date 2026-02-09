@@ -2881,6 +2881,20 @@ void Gate_Calculations_Slave(void)
 	Flag_Update_Graph_Gates = 1;
 }
 
+_Bool Stop_Controlling_if_Error_IsDecreasing(float cur_Error)
+{
+	if(Prev_Corrected_Error == 5000.0)
+	{
+		Prev_Corrected_Error = cur_Error;
+		return false;
+	}
+	else
+	{
+
+	}
+	return false;
+}
+
 //Check at the time of GateSet, avg and Avg_Value need to be reset
 void Avg_Errors_Vertical(float prev , float cur)
 {
