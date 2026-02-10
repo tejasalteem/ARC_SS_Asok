@@ -9,22 +9,24 @@ void Common_Correction_Logic_Vertical(void)
 	arc_execution_func_prev_id = arc_execution_func_cur_id;
 	arc_execution_func_cur_id = 95;
 
-//	if((Flag_GateSet == 0) || (Flag_Auto_Vertical == 0) || (Flag_New_Error_Arrived_Vertical == 0) || (Flag_BaseLine_Error != 0) || (Flag_Print_Mode == 0))
 	if((Flag_Auto_Vertical == 0) || (Flag_New_Error_Arrived_Vertical == 0))
 	{
 		return;
 	}
 
-	if(Stop_Controlling_if_Error_IsDecreasing(CurError_Avg[Vertical],PrevError_Avg[Vertical]) == 1)
+	if(Stop_Controlling_if_Error_IsDecreasing_Vertical(CurError_Avg[Vertical],PrevError_Avg[Vertical]) == 1)
 	{
 		PrevError_Avg[Vertical] = CurError_Avg[Vertical];
 		Flag_New_Error_Arrived_Vertical = 0;
 		return;
 	}
 
-	Do_Correction_Vertical(CheckReverse_Correction_Vertical(CurError_Avg[Vertical],PrevError_Avg[Vertical]), CurError_Avg[Vertical], PrevError_Avg[Vertical]);
+	unsigned char RevCountV = CheckReverse_Correction_Vertical(CurError_Avg[Vertical],PrevError_Avg[Vertical]);
+	Do_Correction_Vertical(RevCountV, CurError_Avg[Vertical], PrevError_Avg[Vertical]);
 	PrevError_Avg[Vertical] = CurError_Avg[Vertical];
 	Flag_New_Error_Arrived_Vertical = 0;
+
+	RevCorrCount[Vertical] = RevCountV;
 
 	if(CurErrorPositive_Avg[Vertical] > Config_Float[AltF_Error_Alarm_Vert])
 	{
@@ -43,14 +45,24 @@ void Common_Correction_Logic_Horizontal(void)
 	arc_execution_func_prev_id = arc_execution_func_cur_id;
 	arc_execution_func_cur_id = 96;
 
-//	if((Flag_GateSet == 0) || (Flag_Auto_Horizontal == 0) || (Flag_New_Error_Arrived_Horizontal == 0) || (Flag_BaseLine_Error != 0) || (Flag_Print_Mode == 0))
 	if((Flag_Auto_Horizontal == 0) || (Flag_New_Error_Arrived_Horizontal == 0))
 	{
 		return;
 	}
-	Do_Correction_Horizontal(CheckReverse_Correction_Horizontal(CurError_Avg[Horizontal],PrevError_Avg[Horizontal]), CurError_Avg[Horizontal], PrevError_Avg[Horizontal]);
+
+	if(Stop_Controlling_if_Error_IsDecreasing_Horizontal(CurError_Avg[Horizontal],PrevError_Avg[Horizontal]) == 1)
+	{
+		PrevError_Avg[Horizontal] = CurError_Avg[Horizontal];
+		Flag_New_Error_Arrived_Horizontal = 0;
+		return;
+	}
+
+	unsigned char RevCountH = CheckReverse_Correction_Horizontal(CurError_Avg[Horizontal],PrevError_Avg[Horizontal]);
+	Do_Correction_Horizontal(RevCountH, CurError_Avg[Horizontal], PrevError_Avg[Horizontal]);
 	PrevError_Avg[Horizontal] = CurError_Avg[Horizontal];
 	Flag_New_Error_Arrived_Horizontal = 0;
+
+	RevCorrCount[Horizontal] = RevCountH;
 
 	if(CurErrorPositive_Avg[Horizontal] > Config_Float[AltF_Error_Alarm_Horz])
 	{
@@ -62,6 +74,82 @@ void Common_Correction_Logic_Horizontal(void)
 	}
 }
 
+_Bool Stop_Controlling_if_Error_IsDecreasing_Vertical(float Cur_Error, float Prev_Error)
+{
+	float temp_diff = (Cur_Error < Prev_Error) ? Prev_Error - Cur_Error : Cur_Error - Prev_Error;
+
+	char Cur_Error_State = (Cur_Error < 0)? 0:1;
+	char Prev_Error_State = (Prev_Error < 0)? 0:1;
+
+	float Pos_Cur_Error 	= (Cur_Error < 0) 	? Cur_Error * -1 	: Cur_Error;
+	float Pos_Prev_Error 	= (Prev_Error < 0) 	? Prev_Error * -1 	: Prev_Error;
+
+	if(Prev_Error == 5000.0)
+	{
+		return(0);
+	}
+
+	if(Prev_Error_State != Cur_Error_State)
+	{
+		return(0);
+	}
+	else
+	{
+		if((Pos_Cur_Error < Pos_Prev_Error) && (temp_diff > 0.05))
+		{
+			if(Flag_Serial_Debug_Enable != 0)
+			{
+				sprintf(Debug_String,"VERT: RET_Stop_ErrDec, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical]);
+				Flag_Debug = 1;
+			}
+			return(1);
+		}
+		else
+		{
+			return(0);
+		}
+	}
+	return(0);
+}
+
+_Bool Stop_Controlling_if_Error_IsDecreasing_Horizontal(float Cur_Error, float Prev_Error)
+{
+	float temp_diff = (Cur_Error < Prev_Error) ? Prev_Error - Cur_Error : Cur_Error - Prev_Error;
+
+	char Cur_Error_State = (Cur_Error < 0)? 0:1;
+	char Prev_Error_State = (Prev_Error < 0)? 0:1;
+
+	float Pos_Cur_Error 	= (Cur_Error < 0) 	? Cur_Error * -1 	: Cur_Error;
+	float Pos_Prev_Error 	= (Prev_Error < 0) 	? Prev_Error * -1 	: Prev_Error;
+
+	if(Prev_Error == 5000.0)
+	{
+		return(0);
+	}
+
+	if(Prev_Error_State != Cur_Error_State)
+	{
+		return(0);
+	}
+	else
+	{
+		if((Pos_Cur_Error < Pos_Prev_Error) && (temp_diff > 0.05))
+		{
+			if(Flag_Serial_Debug_Enable != 0)
+			{
+				sprintf(Debug_String,"HORZ: RET_Stop_ErrDec, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal]);
+				Flag_Debug = 1;
+			}
+			return(1);
+		}
+		else
+		{
+			return(0);
+		}
+	}
+	return(0);
+}
+
 unsigned char CheckReverse_Correction_Vertical(float MyCurError , float MyPrevError)
 {
 	arc_execution_func_prev_id_02 = arc_execution_func_prev_id_01;
@@ -69,9 +157,16 @@ unsigned char CheckReverse_Correction_Vertical(float MyCurError , float MyPrevEr
 	arc_execution_func_prev_id = arc_execution_func_cur_id;
 	arc_execution_func_cur_id = 97;
 
+	static unsigned char revCount = 0;
+
+	if(MyPrevError == 5000.0)
+	{
+		revCount = 0;
+		return revCount;
+	}
+
 	float Error_Correction =  (MyCurError < 0) ? MyCurError * -1 : MyCurError;
 	float Prev_Error_Correction =  (MyPrevError < 0) ? MyPrevError * -1 : MyPrevError;
-	static unsigned char revCount = 0;
 
 	//when error switch from pos to neg or neg to pos
 	if(((MyCurError<0) && (MyPrevError > 0)) || ((MyCurError>0) && (MyPrevError < 0)))
@@ -98,9 +193,16 @@ unsigned char CheckReverse_Correction_Horizontal(float MyCurError , float MyPrev
 	arc_execution_func_prev_id = arc_execution_func_cur_id;
 	arc_execution_func_cur_id = 98;
 
+	static unsigned char revCount = 0;
+
+	if(MyPrevError == 5000.0)
+	{
+		revCount = 0;
+		return revCount;
+	}
+
 	float Error_Correction =  (MyCurError < 0) ? MyCurError * -1 : MyCurError;
 	float Prev_Error_Correction =  (MyPrevError < 0) ? MyPrevError * -1 : MyPrevError;
-	static unsigned char revCount = 0;
 
 	//when error switch from pos to neg or neg to pos
 	if(((MyCurError<0) && (MyPrevError > 0)) || ((MyCurError>0) && (MyPrevError < 0)))
@@ -120,7 +222,7 @@ unsigned char CheckReverse_Correction_Horizontal(float MyCurError , float MyPrev
 	return revCount;
 }
 
-void Do_Correction_Vertical(unsigned char Reverse_Correction , float MyCurError , float MyPrevError)		//UPDATED 17.07.2021
+void Do_Correction_Vertical(unsigned char Reverse_Correction , float MyCurError , float MyPrevError)
 {
 	arc_execution_func_prev_id_02 = arc_execution_func_prev_id_01;
 	arc_execution_func_prev_id_01 = arc_execution_func_prev_id;
@@ -140,7 +242,7 @@ void Do_Correction_Vertical(unsigned char Reverse_Correction , float MyCurError 
 			Stop_Digital_Correction_Vertical();
 			if(Flag_Serial_Debug_Enable != 0)
 			{
-				sprintf(Debug_String,"VERT: RET_ErRange, Emm: %.3f\n",Error_Correction);
+				sprintf(Debug_String,"VERT: RET_ErRange, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical]);
 				Flag_Debug = 1;
 			}
 			return;
@@ -155,7 +257,7 @@ void Do_Correction_Vertical(unsigned char Reverse_Correction , float MyCurError 
 		{
 			if(Flag_Serial_Debug_Enable != 0)
 			{
-				sprintf(Debug_String,"VERT: RET_R, Emm: %.3f\n",Error_Correction);
+				sprintf(Debug_String,"VERT: RET_Rev_E>2, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical]);
 				Flag_Debug = 1;
 			}
 			return;
@@ -258,7 +360,7 @@ void Do_Correction_Horizontal(unsigned char Reverse_Correction , float MyCurErro
 			Stop_Digital_Correction_Horizontal();
 			if(Flag_Serial_Debug_Enable != 0)
 			{
-				sprintf(Debug_String,"HORZ: RET_ErRange, Emm: %.3f\n",Error_Correction);
+				sprintf(Debug_String,"HORZ: RET_ErRange, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal]);
 				Flag_Debug = 1;
 			}
 			return;
@@ -273,7 +375,7 @@ void Do_Correction_Horizontal(unsigned char Reverse_Correction , float MyCurErro
 		{
 			if(Flag_Serial_Debug_Enable != 0)
 			{
-				sprintf(Debug_String,"HORZ: RET_R, Emm: %.3f\n",Error_Correction);
+				sprintf(Debug_String,"HORZ: RET_Rev_E>2, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal]);
 				Flag_Debug = 1;
 			}
 			return;
@@ -368,7 +470,7 @@ void Digital_Correction_Vertical(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurError
 	{
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"VERT: RET_Zero, Cms: %d\n",MyCurError);
+			sprintf(Debug_String,"VERT: RET_CorZero, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, Cms : %d\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical],Correction_ms_Vert);
 			Flag_Debug = 1;
 		}
 		return;
@@ -393,7 +495,7 @@ void Digital_Correction_Vertical(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurError
 		HAL_GPIO_WritePin(DO_1_GPIO_Port, DO_1_Pin,Pulse_Level_Active);
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"VERT: CE: %+.3f, PE: %+.3f, CR_U_%c, Cms: %d\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],Debug_Gain_Used[Debug_Flag_Gain_Used],MyCurError);
+			sprintf(Debug_String,"VERT: CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, CR_U_%c, Cms: %d\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical],Debug_Gain_Used[Debug_Flag_Gain_Used],Correction_ms_Vert);
 			Flag_Debug = 1;
 		}
 		Flag_Correction_Vert_Upper = 1;
@@ -404,7 +506,7 @@ void Digital_Correction_Vertical(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurError
 		HAL_GPIO_WritePin(DO_2_GPIO_Port, DO_2_Pin,Pulse_Level_Active);
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"VERT: CE: %+.3f, PE: %+.3f, CR_L_%c, Cms: %d\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],Debug_Gain_Used[Debug_Flag_Gain_Used],MyCurError);
+			sprintf(Debug_String,"VERT: CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, CR_L_%c, Cms: %d\n",CurError_Avg[Vertical],PrevError_Avg[Vertical],CurError[Vertical],PrevError[Vertical],Debug_Gain_Used[Debug_Flag_Gain_Used],Correction_ms_Vert);
 			Flag_Debug = 1;
 		}
 		Correction_ms_Vert = Correction_ms_Vert * (-1);
@@ -427,7 +529,7 @@ void Digital_Correction_Horizontal(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurErr
 	{
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"HORZ: RET_Zero, Cms: %d\n",MyCurError);
+			sprintf(Debug_String,"HORZ: RET_CorZero, CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, Cms : %d\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal],Correction_ms_Horz);
 			Flag_Debug = 1;
 		}
 		return;
@@ -453,7 +555,7 @@ void Digital_Correction_Horizontal(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurErr
 
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"HORZ: CE: %+.3f, PE: %+.3f, CR_U_%c, Cms: %d\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],Debug_Gain_Used[Debug_Flag_Gain_Used],MyCurError);
+			sprintf(Debug_String,"HORZ: CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, CR_U_%c, Cms: %d\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal],Debug_Gain_Used[Debug_Flag_Gain_Used],Correction_ms_Horz);
 			Flag_Debug = 1;
 		}
 		Flag_Correction_Horz_Upper = 1;
@@ -464,7 +566,7 @@ void Digital_Correction_Horizontal(_Bool Flag_Temp_Pulse_Type, uint16_t MyCurErr
 		HAL_GPIO_WritePin(DO_4_GPIO_Port, DO_4_Pin,Pulse_Level_Active);
 		if(Flag_Serial_Debug_Enable != 0)
 		{
-			sprintf(Debug_String,"HORZ: CE: %+.3f, PE: %+.3f, CR_L_%c, Cms: %d\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],Debug_Gain_Used[Debug_Flag_Gain_Used],MyCurError);
+			sprintf(Debug_String,"HORZ: CA: %+.3f, PA: %+.3f, CE: %+.3f, PE: %+.3f, CR_L_%c, Cms: %d\n",CurError_Avg[Horizontal],PrevError_Avg[Horizontal],CurError[Horizontal],PrevError[Horizontal],Debug_Gain_Used[Debug_Flag_Gain_Used],Correction_ms_Horz);
 			Flag_Debug = 1;
 		}
 		Correction_ms_Horz = Correction_ms_Horz * (-1);

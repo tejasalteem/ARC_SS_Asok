@@ -21,7 +21,8 @@ extern uint16_t filled_count;
 
 //==================================================================================
 
-_Bool Stop_Controlling_if_Error_IsDecreasing(float, float);
+_Bool Stop_Controlling_if_Error_IsDecreasing_Vertical(float, float);
+_Bool Stop_Controlling_if_Error_IsDecreasing_Horizontal(float, float);
 
 uint16_t Get_Received_Data_Length(UART_HandleTypeDef *huart);
 
@@ -490,6 +491,9 @@ void Check_For_LCD_Touch_Command_Touch_Buttons(void)
 											__HAL_TIM_SET_COUNTER(&htim16,0);
 											__HAL_TIM_SET_AUTORELOAD(&htim16,Max_Value_Timer_Idle);		//Max_Value_Timer_Idle
 											HAL_TIM_Base_Start_IT(&htim16);
+
+											PrevError_Avg[Horizontal] = 5000.0;
+
 											Flag_Auto_Horizontal = 1;
 											Flag_Auto_Any = 1;
 
@@ -530,6 +534,9 @@ void Check_For_LCD_Touch_Command_Touch_Buttons(void)
 											__HAL_TIM_SET_COUNTER(&htim15,0);
 											__HAL_TIM_SET_AUTORELOAD(&htim15,Max_Value_Timer_Idle);
 											HAL_TIM_Base_Start_IT(&htim15);
+
+											PrevError_Avg[Vertical] = 5000.0;
+
 											Flag_Auto_Vertical = 1;
 											Flag_Auto_Any = 1;
 
@@ -2883,49 +2890,6 @@ void Gate_Calculations_Slave(void)
 	Flag_Update_Graph_Gates = 1;
 }
 
-_Bool Stop_Controlling_if_Error_IsDecreasing(float Cur_Error, float Prev_Error)
-{
-	float temp_diff = (Cur_Error < Prev_Error) ? Prev_Error - Cur_Error : Cur_Error - Prev_Error;
-
-	char Cur_Error_State = (Cur_Error < 0)? 0:1;
-	char Prev_Error_State = (Prev_Error < 0)? 0:1;
-
-	float Pos_Cur_Error 	= (Cur_Error < 0) 	? Cur_Error * -1 	: Cur_Error;
-	float Pos_Prev_Error 	= (Prev_Error < 0) 	? Prev_Error * -1 	: Prev_Error;
-
-	Test_StopCorr_Index++;
-
-	if(Prev_Error == 5000.0)
-	{
-		sprintf(Debug_String,"VERT: %u. OK_StopCorr_5k : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
-		Send_String_UART_232((uint8_t *)Debug_String);
-		return(0);
-	}
-
-	if(Prev_Error_State != Cur_Error_State)
-	{
-		sprintf(Debug_String,"VERT: %u. OK_StopCorr_!= : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
-		Send_String_UART_232((uint8_t *)Debug_String);
-		return(0);
-	}
-	else
-	{
-		if((Pos_Cur_Error < Pos_Prev_Error) && (temp_diff > 0.05))
-		{
-			sprintf(Debug_String,"VERT: %u. RET_StopCorr : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error, Prev_Error);
-			Send_String_UART_232((uint8_t *)Debug_String);
-			return(1);
-		}
-		else
-		{
-			sprintf(Debug_String,"VERT: %u. OK_StopCorr_== : CE: %+.3f, PCE : %+.3f\n",Test_StopCorr_Index, Cur_Error,Prev_Error);
-			Send_String_UART_232((uint8_t *)Debug_String);
-			return(0);
-		}
-	}
-	return(0);
-}
-
 //Check at the time of GateSet, avg and Avg_Value need to be reset
 void Avg_Errors_Vertical(float prev , float cur)
 {
@@ -2965,6 +2929,12 @@ void Avg_Errors_Vertical(float prev , float cur)
 		skip_corr_count++;
 		if(skip_corr_count <= 2)
 		{
+			Flag_SkipErr[Vertical] = 1;
+			if(Flag_Serial_Debug_Enable != 0)
+			{
+				sprintf(Debug_String,"VERT: AVG_Err_Func_SKIP : CE: %+.3f, PE: %+.3f, Diff: %+.3f\n",CurError[Vertical],PrevError[Vertical],diff);
+				Flag_Debug = 1;
+			}
 			return;
 		}
 	}
@@ -2984,6 +2954,14 @@ void Avg_Errors_Vertical(float prev , float cur)
 		{
 			Config_Float[AltF_Corr_Offset_Vert] = Config_Float[AltF_Corr_Offset_Vert] - CurError_Avg[Vertical];
 			Perform_Good_Copy_Vert_Stage = 2;
+		}
+	}
+	else
+	{
+		if(Flag_Serial_Debug_Enable != 0)
+		{
+			sprintf(Debug_String,"VERT: AVG_Err_Func : CE: %+.3f, PE: %+.3f, Diff: %+.3f, RL : %d\n",CurError[Vertical],PrevError[Vertical],diff,Repeat_Length[Vertical]);
+			Flag_Debug = 1;
 		}
 	}
 }
@@ -3026,6 +3004,12 @@ void Avg_Errors_Horizontal(float prev , float cur)
 		skip_corr_count++;
 		if(skip_corr_count <= 2)
 		{
+			Flag_SkipErr[Horizontal] = 1;
+			if(Flag_Serial_Debug_Enable != 0)
+			{
+				sprintf(Debug_String,"HORZ: AVG_Err_Func_SKIP : CE: %+.3f, PE: %+.3f, Diff: %+.3f\n",CurError[Horizontal],PrevError[Horizontal],diff);
+				Flag_Debug = 1;
+			}
 			return;
 		}
 	}
@@ -3045,6 +3029,14 @@ void Avg_Errors_Horizontal(float prev , float cur)
 		{
 			Config_Float[AltF_Corr_Offset_Horz] = Config_Float[AltF_Corr_Offset_Horz] - CurError_Avg[Horizontal];
 			Perform_Good_Copy_Horz_Stage = 2;
+		}
+	}
+	else
+	{
+		if(Flag_Serial_Debug_Enable != 0)
+		{
+			sprintf(Debug_String,"HORZ: AVG_Err_Func : CE: %+.3f, PE: %+.3f, Diff: %+.3f, RL : %d\n",CurError[Horizontal],PrevError[Horizontal],diff,Repeat_Length[Horizontal]);
+			Flag_Debug = 1;
 		}
 	}
 }
@@ -3738,7 +3730,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				{
 					if(Config_Parameters[Alt_Encoder_Time_Mode] == Encoder_Mode)
 					{
-						sprintf(Debug_String,"MH:%u %u,MV: %u %u,SL: %u %u, MEH:%d, CEH:%f, CEA:%f, MEV:%d, CEV:%f, CEV:%f\n",
+						sprintf(Debug_String,"MH:%u %u,MV: %u %u,SL: %u %u, MEH:%d, CEH:%f, CAH:%f, MEV:%d, CEV:%f, CAV:%f\n",
 							Mark_Encoder_Value[Master_Horz][Rising_Edge],
 							Mark_Encoder_Value[Master_Horz][Falling_Edge],
 							Mark_Encoder_Value[Master_Vert][Rising_Edge],

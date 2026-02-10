@@ -985,8 +985,30 @@ void Arrange_Display_System_Mode_BLE_Data_Array(void)
 	arc_execution_func_prev_id = arc_execution_func_cur_id;
 	arc_execution_func_cur_id = 87;
 	//16 BIT VARIABLES
-	BLE_Display_Registers[BLE_DISP_AVG_HORZ] 		= LCD_Display_Registers[LCD_DISP_AVG_HORZ];
-	BLE_Display_Registers[BLE_DISP_AVG_VERT] 		= LCD_Display_Registers[LCD_DISP_AVG_VERT];
+
+	//A value which is combination of Skip Flag, RevCorrCount & Average Count
+	uint16_t temp_var = RevCorrCount[Horizontal];
+	RevCorrCount[Horizontal] = 0;
+	temp_var = temp_var << 8;
+	if(Flag_SkipErr[Horizontal] != 0)
+	{
+		temp_var = temp_var | 0x8000;
+	}
+	Flag_SkipErr[Horizontal] = 0;
+	BLE_Display_Registers[BLE_DISP_AVG_HORZ] 		= temp_var | LCD_Display_Registers[LCD_DISP_AVG_HORZ];
+
+	temp_var = RevCorrCount[Vertical];
+	RevCorrCount[Vertical] = 0;
+	temp_var = temp_var << 8;
+	if(Flag_SkipErr[Vertical] != 0)
+	{
+		temp_var = temp_var | 0x8000;
+	}
+	Flag_SkipErr[Vertical] = 0;
+	BLE_Display_Registers[BLE_DISP_AVG_VERT]		= temp_var | LCD_Display_Registers[LCD_DISP_AVG_VERT];
+
+//	BLE_Display_Registers[BLE_DISP_AVG_HORZ] 		= LCD_Display_Registers[LCD_DISP_AVG_HORZ];
+//	BLE_Display_Registers[BLE_DISP_AVG_VERT] 		= LCD_Display_Registers[LCD_DISP_AVG_VERT];
 
 	BLE_Display_Registers[BLE_CORR_MS_HORZ] 		= Correction_ms_Horz;
 	BLE_Display_Registers[BLE_CORR_MS_VERT] 		= Correction_ms_Vert;

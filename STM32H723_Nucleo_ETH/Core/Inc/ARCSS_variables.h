@@ -945,6 +945,6 @@ _Bool Flag_EncError_SkipInc = 0;
 
 uint16_t Temp_Disp_Enc_Count_at_Z = 0;
 uint16_t Temp_Disp_Prev_Enc_Count_at_Z = 0;
-float Prev_Corrected_Error = 5000.0;
 
-uint16_t Test_StopCorr_Index = 0;
+_Bool Flag_SkipErr[2] = {0,0};
+uint8_t RevCorrCount[2] = {0,0};
